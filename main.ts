@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     const HF_TOKEN = Deno.env.get('HF_TOKEN');
 
     const response = await fetch(
-      'https://api-inference.huggingface.co/models/stabilityai/sd-turbo',
+      'https://router.huggingface.co/hf-inference/models/stabilityai/sd-turbo',
       {
         method: 'POST',
         headers: {

@@ -26,14 +26,19 @@ Deno.serve(async (req) => {
     const HF_TOKEN = Deno.env.get('HF_TOKEN');
 
     const response = await fetch(
-      'https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell/v1/text-to-image',
+      'https://router.huggingface.co/fal-ai/flux/schnell',
       {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${HF_TOKEN}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ inputs: prompt }),
+        body: JSON.stringify({ 
+          prompt: prompt,
+          image_size: 'square_hd',
+          num_inference_steps: 4,
+          num_images: 1,
+        }),
       }
     );
 
@@ -45,7 +50,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    const imageBuffer = await response.arrayBuffer();
+    const data = await response.json();
+    const imageUrl = data.images?.[0]?.url;
+
+    if (!imageUrl) {
+      return new Response(JSON.stringify({ error: 'No image returned' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      });
+    }
+
+    // Fetch the image and convert to base64
+    const imageResponse = await fetch(imageUrl);
+    const imageBuffer = await imageResponse.arrayBuffer();
     const base64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
 
     return new Response(JSON.stringify({ image: `data:image/jpeg;base64,${base64}` }), {
